@@ -126,7 +126,7 @@ class Unit:
         if isinstance(other, (int, float)):
             return self.__class__(self._get_value() * other)
         elif isinstance(other, Unit):
-            valSI = self._value / other._value
+            valSI = self._value * other._value
             dimentions = self._dimentions.copy()
             for dim, exp in dimentions.items():
                 dimentions[dim] = exp + other._dimentions[dim]
