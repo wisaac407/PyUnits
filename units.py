@@ -93,18 +93,20 @@ class IncompatibleUnitsError(TypeError):
     """Raised when trying to convert a unit to another that is not dimentionally equivilant"""
 
 
-#class UnitMeta(type):
-#    def __new__(cls, name, bases, attrs):
+class UnitMeta(type):
+    def __new__(cls, name, bases, attrs):
+        # Dict of dimentions and their corresponding exponents
+        dim = DIMENTIONLESS.copy()
+        dim.update(attrs.get('_dimentions', {}))
 
-#        return type.__new__(cls, name, bases, attrs)
+        attrs['_dimentions'] = dim
+
+        return type.__new__(cls, name, bases, attrs)
 
 
-class Unit:
+class Unit(object, metaclass=UnitMeta):
     """Base class for all units"""
     def __init__(self, value):
-        # Dict of dimentions and their corresponding exponents
-        self._dimentions = DIMENTIONLESS.copy()
-        self._setup()
         if isinstance(value, (int, float)):
             self._set_value(value)
         elif isinstance(value, Unit):
@@ -224,38 +226,31 @@ class Unit:
 # Base SI units
 class Second(Unit):
     _symbol = 's'
-    def _setup(self):
-        self._dimentions[TIME] = 1
+    _dimentions = {TIME: 1}
 
 class Meter(Unit):
     _symbol = 'm'
-    def _setup(self):
-        self._dimentions[LENGTH] = 1
+    _dimentions = {LENGTH: 1}
 
 class Kilogram(Unit):
     _symbol = 'kg'
-    def _setup(self):
-        self._dimentions[MASS] = 1
+    _dimentions = {MASS: 1}
 
 class Mole(Unit):
     _symbol = 'mol'
-    def _setup(self):
-        self._dimentions[SUBSTANCE] = 1
+    _dimentions = {SUBSTANCE: 1}
 
 class Candela(Unit):
     _symbol = 'cd'
-    def _setup(self):
-        self._dimentions[LUMINOUS] = 1
+    _dimentions = {LUMINOUS: 1}
 
 class Ampere(Unit):
     _symbol = 'A'
-    def _setup(self):
-        self._dimentions[CURRENT] = 1
+    _dimentions = {CURRENT: 1}
 
 class Kelvin(Unit):
     _symbol = 'K'
-    def _setup(self):
-        self._dimentions[TEMPERATURE] = 1
+    _dimentions = {TEMPERATURE: 1}
 
 
 SI_BASE_UNITS = {
@@ -273,9 +268,7 @@ SI_BASE_UNITS = {
 class CompoundUnit(Unit):
     """Mixed unnamed unit"""
     def __init__(self, value, dimentions):
-        def setup():
-            self._dimentions.update(dimentions)
-        self._setup = setup
+        self._dimentions = dimentions
 
         Unit.__init__(self, value)
 
@@ -288,28 +281,25 @@ class CompoundUnit(Unit):
 # Derived SI units
 class Newton(Unit):
     _symbol = 'N'
-    def _setup(self):
-        self._dimentions.update({
-            MASS: 1,
-            LENGTH: 1,
-            TIME: -2
-        })
+    _dimentions = {
+        MASS: 1,
+        LENGTH: 1,
+        TIME: -2
+    }
 
 
 class Joule(Unit):
     _symbol = 'J'
-    def _setup(self):
-        self._dimentions.update({
-            MASS: 1,
-            LENGTH: 2,
-            TIME: -2
-        })
+    _dimentions = {
+        MASS: 1,
+        LENGTH: 2,
+        TIME: -2
+    }
 
 
 class Kilometer(Unit):
     _symbol = 'km'
-    def _setup(self):
-        self._dimentions[LENGTH] = 1
+    _dimentions = {LENGTH: 1}
 
     def _convert_to_SI(self, value):
         return value * 1000.0
@@ -320,8 +310,7 @@ class Kilometer(Unit):
 
 class Gram(Unit):
     _symbol = 'g'
-    def _setup(self):
-        self._dimentions[MASS] = 1
+    _dimentions = {MASS: 1}
 
     def _convert_to_SI(self, value):
         return value / 1000.0
@@ -332,8 +321,7 @@ class Gram(Unit):
 
 class Degrees_Celsius(Unit):
     _symbol = 'C'
-    def _setup(self):
-        self._dimentions[TEMPERATURE] = 1
+    _dimentions = {TEMPERATURE: 1}
 
     def _convert_to_SI(self, value):
         return value + 273.15
