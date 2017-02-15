@@ -19,6 +19,43 @@ DIM_NAMES = {
 
 USE_UNICODE = True
 
+
+DIMENTIONLESS = {
+    TIME:        0,
+    LENGTH:      0,
+    MASS:        0,
+    SUBSTANCE:   0,
+    LUMINOUS:    0,
+    CURRENT:     0,
+    TEMPERATURE: 0,
+}
+
+
+def _dimentions(dims):
+    dim = DIMENTIONLESS.copy()
+    dim.update(dims)
+    return dim
+
+
+DIMENTION_NAMES = {
+    # Start with the base units
+    'time': _dimentions({TIME: 1}),
+    'length': _dimentions({LENGTH: 1}),
+    'mass': _dimentions({MASS: 1}),
+    'substance': _dimentions({SUBSTANCE: 1}),
+    'luminous intensity': _dimentions({LUMINOUS: 1}),
+    'electrical current': _dimentions({CURRENT: 1}),
+    'temperature': _dimentions({TEMPERATURE: 1}),
+
+    # Common units of measure
+    'velocity': _dimentions({LENGTH: 1, TIME: -1}),
+    'accelaration': _dimentions({LENGTH: 1, TIME: -2}),
+    'momentum': _dimentions({LENGTH: 1, TIME: -1, MASS: 1}),
+    'force': _dimentions({LENGTH: 1, TIME: -2, MASS: 1}),
+    'energy': _dimentions({LENGTH: 2, TIME: -2, MASS: 1}),
+}
+
+
 def get_unicode_exp(exp):
     """Format the exponent as a unicode string"""
     char_map = {
@@ -66,15 +103,7 @@ class Unit:
     """Base class for all units"""
     def __init__(self, value):
         # Dict of dimentions and their corresponding exponents
-        self._dimentions = {
-            TIME:        0,
-            LENGTH:      0,
-            MASS:        0,
-            SUBSTANCE:   0,
-            LUMINOUS:    0,
-            CURRENT:     0,
-            TEMPERATURE: 0,
-        }
+        self._dimentions = DIMENTIONLESS.copy()
         self._setup()
         if isinstance(value, (int, float)):
             self._set_value(value)
@@ -82,7 +111,7 @@ class Unit:
             if value._dimentions == self._dimentions:
                 self._value = value._value
             else:
-                raise IncompatibleUnitsError("Units %s and %s are not compatible" % 
+                raise IncompatibleUnitsError("Units %s and %s are not compatible" %
                         (self.__class__, value.__class__))
         else:
             raise TypeError("Type %s is not a value" % value.__class__)
@@ -108,7 +137,7 @@ class Unit:
             return CompoundUnit(valSI, dimentions)
         else:
             return TypeError("Cannot multiply unit by type %s" % other.__class__)
-   
+
     def __rmul__(self, other):
         return self * other
 
@@ -120,10 +149,10 @@ class Unit:
             dimentions = self._dimentions.copy()
             for dim, exp in dimentions.items():
                 dimentions[dim] = exp - other._dimentions[dim]
-            
+
             if not any(list(zip(*dimentions.items()))[1]):
                 return valSI
-            
+
             return CompoundUnit(valSI, dimentions)
         else:
             return TypeError("Cannot divide unit by type %s" % other.__class__)
@@ -146,7 +175,7 @@ class Unit:
                 # Add the SI values, convert to this unit and create a new instance
                 return self.__class__(self._convert_from_SI(self._value + other._value))
             else:
-                raise IncompatibleUnitError("Cannot add %s and %s" % 
+                raise IncompatibleUnitError("Cannot add %s and %s" %
                         (self.__class__, other.__class__))
         else:
             raise TypeError("Type %s is not a unit" % other.__class__)
@@ -157,7 +186,7 @@ class Unit:
                 # Add the SI values, convert to this unit and create a new instance
                 return self.__class__(self._convert_from_SI(self._value - other._value))
             else:
-                raise IncompatibleUnitError("Cannot add %s and %s" % 
+                raise IncompatibleUnitError("Cannot add %s and %s" %
                         (self.__class__, other.__class__))
         else:
             raise TypeError("Type %s is not a unit" % other.__class__)
@@ -185,6 +214,12 @@ class Unit:
             if exp != 0:
               units.append((DIM_NAMES[dim], exp))
         return format_unit_str(units)
+
+    def get_unit_type(self):
+        for typ, dim in DIMENTION_NAMES.items():
+            if self._dimentions == dim:
+                return typ
+        return "complex type"
 
 # Base SI units
 class Second(Unit):
@@ -278,7 +313,7 @@ class Kilometer(Unit):
 
     def _convert_to_SI(self, value):
         return value * 1000.0
-    
+
     def _convert_from_SI(self, value):
         return value / 1000.0
 
@@ -299,10 +334,9 @@ class Degrees_Celsius(Unit):
     _symbol = 'C'
     def _setup(self):
         self._dimentions[TEMPERATURE] = 1
-    
+
     def _convert_to_SI(self, value):
         return value + 273.15
-    
+
     def _convert_from_SI(self, value):
         return value - 273.15
-
