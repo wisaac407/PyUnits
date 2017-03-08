@@ -1,4 +1,4 @@
-# Base dimmentions
+# Base dimensions
 TIME        = 1
 LENGTH      = 2
 MASS        = 3
@@ -19,7 +19,7 @@ DIM_NAMES = {
 
 USE_UNICODE = True
 
-DIMENTIONLESS = {
+DIMENSIONLESS = {
     TIME:        0,
     LENGTH:      0,
     MASS:        0,
@@ -30,28 +30,28 @@ DIMENTIONLESS = {
 }
 
 
-def _dimentions(dims):
-    dim = DIMENTIONLESS.copy()
+def _dimensions(dims):
+    dim = DIMENSIONLESS.copy()
     dim.update(dims)
     return dim
 
 
-DIMENTION_NAMES = {
+DIMENSION_NAMES = {
     # Start with the base units
-    'time': _dimentions({TIME: 1}),
-    'length': _dimentions({LENGTH: 1}),
-    'mass': _dimentions({MASS: 1}),
-    'substance': _dimentions({SUBSTANCE: 1}),
-    'luminous intensity': _dimentions({LUMINOUS: 1}),
-    'electrical current': _dimentions({CURRENT: 1}),
-    'temperature': _dimentions({TEMPERATURE: 1}),
+    'time': _dimensions({TIME: 1}),
+    'length': _dimensions({LENGTH: 1}),
+    'mass': _dimensions({MASS: 1}),
+    'substance': _dimensions({SUBSTANCE: 1}),
+    'luminous intensity': _dimensions({LUMINOUS: 1}),
+    'electrical current': _dimensions({CURRENT: 1}),
+    'temperature': _dimensions({TEMPERATURE: 1}),
 
     # Common units of measure
-    'velocity': _dimentions({LENGTH: 1, TIME: -1}),
-    'accelaration': _dimentions({LENGTH: 1, TIME: -2}),
-    'momentum': _dimentions({LENGTH: 1, TIME: -1, MASS: 1}),
-    'force': _dimentions({LENGTH: 1, TIME: -2, MASS: 1}),
-    'energy': _dimentions({LENGTH: 2, TIME: -2, MASS: 1}),
+    'velocity': _dimensions({LENGTH: 1, TIME: -1}),
+    'acceleration': _dimensions({LENGTH: 1, TIME: -2}),
+    'momentum': _dimensions({LENGTH: 1, TIME: -1, MASS: 1}),
+    'force': _dimensions({LENGTH: 1, TIME: -2, MASS: 1}),
+    'energy': _dimensions({LENGTH: 2, TIME: -2, MASS: 1}),
 }
 
 
@@ -95,11 +95,11 @@ class IncompatibleUnitsError(TypeError):
 
 class UnitMeta(type):
     def __new__(cls, name, bases, attrs):
-        # Dict of dimentions and their corresponding exponents
-        dim = DIMENTIONLESS.copy()
-        dim.update(attrs.get('_dimentions', {}))
+        # Dict of dimensions and their corresponding exponents
+        dim = DIMENSIONLESS.copy()
+        dim.update(attrs.get('_dimensions', {}))
 
-        attrs['_dimentions'] = dim
+        attrs['_dimensions'] = dim
 
         return type.__new__(cls, name, bases, attrs)
 
@@ -111,7 +111,7 @@ class Unit(object, metaclass=UnitMeta):
         if isinstance(value, (int, float)):
             self._set_value(value)
         elif isinstance(value, Unit):
-            if value._dimentions == self._dimentions:
+            if value._dimensions == self._dimensions:
                 self._value = value._value
             else:
                 raise IncompatibleUnitsError("Units %s and %s are not compatible" %
@@ -129,14 +129,14 @@ class Unit(object, metaclass=UnitMeta):
             return self.__class__(self._get_value() * other)
         elif isinstance(other, Unit):
             valSI = self._value * other._value
-            dimentions = self._dimentions.copy()
-            for dim, exp in dimentions.items():
-                dimentions[dim] = exp + other._dimentions[dim]
+            dimensions = self._dimensions.copy()
+            for dim, exp in dimensions.items():
+                dimensions[dim] = exp + other._dimensions[dim]
 
-            if not any(list(zip(*dimentions.items()))[1]):
+            if not any(list(zip(*dimensions.items()))[1]):
                 return valSI
 
-            return CompoundUnit(valSI, dimentions)
+            return CompoundUnit(valSI, dimensions)
         else:
             return TypeError("Cannot multiply unit by type %s" % other.__class__)
 
@@ -148,14 +148,14 @@ class Unit(object, metaclass=UnitMeta):
             return self.__class__(self._get_value() / other)
         elif isinstance(other, Unit):
             valSI = self._value / other._value
-            dimentions = self._dimentions.copy()
-            for dim, exp in dimentions.items():
-                dimentions[dim] = exp - other._dimentions[dim]
+            dimensions = self._dimensions.copy()
+            for dim, exp in dimensions.items():
+                dimensions[dim] = exp - other._dimensions[dim]
 
-            if not any(list(zip(*dimentions.items()))[1]):
+            if not any(list(zip(*dimensions.items()))[1]):
                 return valSI
 
-            return CompoundUnit(valSI, dimentions)
+            return CompoundUnit(valSI, dimensions)
         else:
             return TypeError("Cannot divide unit by type %s" % other.__class__)
 
@@ -163,17 +163,17 @@ class Unit(object, metaclass=UnitMeta):
         # rdiv will not be called with another unit
         if isinstance(other, (int, float)):
             valSI = self._convert_to_SI(other / self._get_value())
-            dimentions = self._dimentions.copy()
-            for dim, exp in dimentions.items():
-                dimentions[dim] = -exp
+            dimensions = self._dimensions.copy()
+            for dim, exp in dimensions.items():
+                dimensions[dim] = -exp
 
-            return CompoundUnit(valSI, dimentions)
+            return CompoundUnit(valSI, dimensions)
         else:
             return TypeError("Type %s cannot divide unit" % other.__class__)
 
     def __add__(self, other):
         if isinstance(other, Unit):
-            if other._dimentions == self._dimentions:
+            if other._dimensions == self._dimensions:
                 # Add the SI values, convert to this unit and create a new instance
                 return self.__class__(self._convert_from_SI(self._value + other._value))
             else:
@@ -184,7 +184,7 @@ class Unit(object, metaclass=UnitMeta):
 
     def __sub__(self, other):
         if isinstance(other, Unit):
-            if other._dimentions == self._dimentions:
+            if other._dimensions == self._dimensions:
                 # Add the SI values, convert to this unit and create a new instance
                 return self.__class__(self._convert_from_SI(self._value - other._value))
             else:
@@ -202,7 +202,7 @@ class Unit(object, metaclass=UnitMeta):
     def _get_symbol(self):
         return self._symbol
 
-    # Convert the input value to the SI equivilant for interal storage
+    # Convert the input value to the SI equivalent for internal storage
     def _convert_to_SI(self, value):
         return value
 
@@ -210,16 +210,16 @@ class Unit(object, metaclass=UnitMeta):
     def _convert_from_SI(self, value):
         return value
 
-    def get_dimentions(self):
+    def get_dimensions(self):
         units = []
-        for dim, exp in self._dimentions.items():
+        for dim, exp in self._dimensions.items():
             if exp != 0:
                 units.append((DIM_NAMES[dim], exp))
         return format_unit_str(units)
 
     def get_unit_type(self):
-        for typ, dim in DIMENTION_NAMES.items():
-            if self._dimentions == dim:
+        for typ, dim in DIMENSION_NAMES.items():
+            if self._dimensions == dim:
                 return typ
         return "complex type"
 
@@ -227,37 +227,37 @@ class Unit(object, metaclass=UnitMeta):
 # Base SI units
 class Second(Unit):
     _symbol = 's'
-    _dimentions = {TIME: 1}
+    _dimensions = {TIME: 1}
 
 
 class Meter(Unit):
     _symbol = 'm'
-    _dimentions = {LENGTH: 1}
+    _dimensions = {LENGTH: 1}
 
 
 class Kilogram(Unit):
     _symbol = 'kg'
-    _dimentions = {MASS: 1}
+    _dimensions = {MASS: 1}
 
 
 class Mole(Unit):
     _symbol = 'mol'
-    _dimentions = {SUBSTANCE: 1}
+    _dimensions = {SUBSTANCE: 1}
 
 
 class Candela(Unit):
     _symbol = 'cd'
-    _dimentions = {LUMINOUS: 1}
+    _dimensions = {LUMINOUS: 1}
 
 
 class Ampere(Unit):
     _symbol = 'A'
-    _dimentions = {CURRENT: 1}
+    _dimensions = {CURRENT: 1}
 
 
 class Kelvin(Unit):
     _symbol = 'K'
-    _dimentions = {TEMPERATURE: 1}
+    _dimensions = {TEMPERATURE: 1}
 
 
 SI_BASE_UNITS = {
@@ -274,13 +274,13 @@ SI_BASE_UNITS = {
 class CompoundUnit(Unit):
     """Mixed unnamed unit"""
 
-    def __init__(self, value, dimentions):
-        self._dimentions = dimentions
+    def __init__(self, value, dimensions):
+        self._dimensions = dimensions
 
         Unit.__init__(self, value)
 
         units = []
-        for dim, exp in dimentions.items():
+        for dim, exp in dimensions.items():
             if exp != 0:
                 units.append((SI_BASE_UNITS[dim]._symbol, exp))
         self._symbol = format_unit_str(units)
@@ -289,7 +289,7 @@ class CompoundUnit(Unit):
 # Derived SI units
 class Newton(Unit):
     _symbol = 'N'
-    _dimentions = {
+    _dimensions = {
         MASS: 1,
         LENGTH: 1,
         TIME: -2
@@ -298,7 +298,7 @@ class Newton(Unit):
 
 class Joule(Unit):
     _symbol = 'J'
-    _dimentions = {
+    _dimensions = {
         MASS: 1,
         LENGTH: 2,
         TIME: -2
@@ -307,7 +307,7 @@ class Joule(Unit):
 
 class Kilometer(Unit):
     _symbol = 'km'
-    _dimentions = {LENGTH: 1}
+    _dimensions = {LENGTH: 1}
 
     def _convert_to_SI(self, value):
         return value * 1000.0
@@ -318,7 +318,7 @@ class Kilometer(Unit):
 
 class Gram(Unit):
     _symbol = 'g'
-    _dimentions = {MASS: 1}
+    _dimensions = {MASS: 1}
 
     def _convert_to_SI(self, value):
         return value / 1000.0
@@ -327,9 +327,9 @@ class Gram(Unit):
         return value * 1000.0
 
 
-class Degrees_Celsius(Unit):
+class DegreesCelsius(Unit):
     _symbol = 'C'
-    _dimentions = {TEMPERATURE: 1}
+    _dimensions = {TEMPERATURE: 1}
 
     def _convert_to_SI(self, value):
         return value + 273.15
