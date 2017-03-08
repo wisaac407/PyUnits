@@ -19,7 +19,6 @@ DIM_NAMES = {
 
 USE_UNICODE = True
 
-
 DIMENTIONLESS = {
     TIME:        0,
     LENGTH:      0,
@@ -77,6 +76,7 @@ def get_unicode_exp(exp):
         s += char_map[c]
     return s
 
+
 def format_unit_str(units):
     """Format the units as a string"""
     if USE_UNICODE:
@@ -106,6 +106,7 @@ class UnitMeta(type):
 
 class Unit(object, metaclass=UnitMeta):
     """Base class for all units"""
+
     def __init__(self, value):
         if isinstance(value, (int, float)):
             self._set_value(value)
@@ -114,7 +115,7 @@ class Unit(object, metaclass=UnitMeta):
                 self._value = value._value
             else:
                 raise IncompatibleUnitsError("Units %s and %s are not compatible" %
-                        (self.__class__, value.__class__))
+                                             (self.__class__, value.__class__))
         else:
             raise TypeError("Type %s is not a value" % value.__class__)
 
@@ -122,7 +123,6 @@ class Unit(object, metaclass=UnitMeta):
         if USE_UNICODE:
             return '%s%s' % (self._get_value(), self._get_symbol())
         return '%s%s' % (self._get_value(), self._get_symbol())
-
 
     def __mul__(self, other):
         if isinstance(other, (int, float)):
@@ -178,7 +178,7 @@ class Unit(object, metaclass=UnitMeta):
                 return self.__class__(self._convert_from_SI(self._value + other._value))
             else:
                 raise IncompatibleUnitError("Cannot add %s and %s" %
-                        (self.__class__, other.__class__))
+                                            (self.__class__, other.__class__))
         else:
             raise TypeError("Type %s is not a unit" % other.__class__)
 
@@ -189,7 +189,7 @@ class Unit(object, metaclass=UnitMeta):
                 return self.__class__(self._convert_from_SI(self._value - other._value))
             else:
                 raise IncompatibleUnitError("Cannot add %s and %s" %
-                        (self.__class__, other.__class__))
+                                            (self.__class__, other.__class__))
         else:
             raise TypeError("Type %s is not a unit" % other.__class__)
 
@@ -214,7 +214,7 @@ class Unit(object, metaclass=UnitMeta):
         units = []
         for dim, exp in self._dimentions.items():
             if exp != 0:
-              units.append((DIM_NAMES[dim], exp))
+                units.append((DIM_NAMES[dim], exp))
         return format_unit_str(units)
 
     def get_unit_type(self):
@@ -223,30 +223,37 @@ class Unit(object, metaclass=UnitMeta):
                 return typ
         return "complex type"
 
+
 # Base SI units
 class Second(Unit):
     _symbol = 's'
     _dimentions = {TIME: 1}
 
+
 class Meter(Unit):
     _symbol = 'm'
     _dimentions = {LENGTH: 1}
+
 
 class Kilogram(Unit):
     _symbol = 'kg'
     _dimentions = {MASS: 1}
 
+
 class Mole(Unit):
     _symbol = 'mol'
     _dimentions = {SUBSTANCE: 1}
+
 
 class Candela(Unit):
     _symbol = 'cd'
     _dimentions = {LUMINOUS: 1}
 
+
 class Ampere(Unit):
     _symbol = 'A'
     _dimentions = {CURRENT: 1}
+
 
 class Kelvin(Unit):
     _symbol = 'K'
@@ -264,9 +271,9 @@ SI_BASE_UNITS = {
 }
 
 
-
 class CompoundUnit(Unit):
     """Mixed unnamed unit"""
+
     def __init__(self, value, dimentions):
         self._dimentions = dimentions
 
@@ -275,8 +282,9 @@ class CompoundUnit(Unit):
         units = []
         for dim, exp in dimentions.items():
             if exp != 0:
-              units.append((SI_BASE_UNITS[dim]._symbol, exp))
+                units.append((SI_BASE_UNITS[dim]._symbol, exp))
         self._symbol = format_unit_str(units)
+
 
 # Derived SI units
 class Newton(Unit):
